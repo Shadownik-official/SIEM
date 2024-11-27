@@ -1,0 +1,19 @@
+[Unit]
+Description=SIEM API Service
+After=network.target postgresql.service redis.service elasticsearch.service
+Requires=postgresql.service redis.service elasticsearch.service
+
+[Service]
+Type=simple
+User=siem
+Group=siem
+WorkingDirectory=/opt/siem
+ExecStart=/usr/local/bin/uvicorn api.main:app --host 0.0.0.0 --port 8000 --ssl-keyfile /etc/siem/ssl.key --ssl-certfile /etc/siem/ssl.crt
+Restart=always
+RestartSec=3
+Environment=PYTHONPATH=/opt/siem
+Environment=CONFIG_PATH=/etc/siem/api.yml
+Environment=JWT_SECRET_PATH=/etc/siem/jwt_secret.key
+
+[Install]
+WantedBy=multi-user.target

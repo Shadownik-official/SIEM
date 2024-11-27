@@ -1,0 +1,6 @@
+2024-11-27 11:53:09,767 - INFO - Starting SIEM test suite execution
+2024-11-27 11:53:13,133 - INFO - Generating coverage report...
+2024-11-27 11:53:13,465 - INFO - Tests Run: 3
+2024-11-27 11:53:13,465 - INFO - Failures: 0
+2024-11-27 11:53:13,465 - INFO - Errors: 3
+2024-11-27 11:53:13,465 - INFO - Skipped: 0

@@ -1,0 +1,31 @@
+# Core Dependencies
+fastapi==0.104.1
+uvicorn==0.24.0
+python-jose==3.3.0
+passlib==1.7.4
+python-multipart==0.0.6
+pydantic==2.4.2
+sqlalchemy==2.0.23
+
+# Security
+cryptography==41.0.5
+pyOpenSSL==23.3.0
+certifi==2023.11.17
+
+# Testing Dependencies
+pytest==7.4.3
+pytest-cov==4.1.0
+pytest-asyncio==0.21.1
+coverage==7.3.2
+pytest-mock==3.12.0
+responses==0.24.1
+
+# System Information
+distro==1.8.0
+psutil==5.9.6
+wmi==1.5.1; platform_system == "Windows"
+
+# Logging & Monitoring
+structlog==23.2.0
+python-json-logger==2.0.7
+statsd==4.0.1

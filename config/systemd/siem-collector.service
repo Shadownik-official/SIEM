@@ -1,0 +1,18 @@
+[Unit]
+Description=SIEM Log Collector Service
+After=network.target postgresql.service redis.service elasticsearch.service
+Requires=postgresql.service redis.service elasticsearch.service
+
+[Service]
+Type=simple
+User=siem
+Group=siem
+WorkingDirectory=/opt/siem
+ExecStart=/usr/local/bin/python3 -m collector.main
+Restart=always
+RestartSec=3
+Environment=PYTHONPATH=/opt/siem
+Environment=CONFIG_PATH=/etc/siem/collector.yml
+
+[Install]
+WantedBy=multi-user.target

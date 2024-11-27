@@ -1,0 +1,84 @@
+{
+    "agent": {
+        "log_level": "INFO",
+        "collection_interval": 60,
+        "server_endpoint": "http://localhost:8000",
+        "encryption_key": "change_this_in_production",
+        "collectors": {
+            "syslog": true,
+            "eventlog": true,
+            "security": true,
+            "network": true,
+            "process": true,
+            "file": true
+        }
+    },
+    "intelligence": {
+        "feeds": [
+            "https://otx.alienvault.com/api/v1/indicators/export",
+            "https://api.threatconnect.com/v3/indicators"
+        ],
+        "stix_server": "https://stix.server.example",
+        "api_key": "change_this_in_production",
+        "update_interval": 3600,
+        "risk_threshold": 7.0,
+        "ml_config": {
+            "model_path": "models/threat_detection.pkl",
+            "feature_extractor_path": "models/feature_extractor.pkl",
+            "confidence_threshold": 0.8,
+            "batch_size": 100
+        }
+    },
+    "database": {
+        "type": "elasticsearch",
+        "host": "localhost",
+        "port": 9200,
+        "index_prefix": "siem",
+        "username": "elastic",
+        "password": "change_this_in_production",
+        "retention_days": 90
+    },
+    "api": {
+        "host": "0.0.0.0",
+        "port": 8000,
+        "debug": false,
+        "ssl": {
+            "enabled": true,
+            "cert_file": "certs/server.crt",
+            "key_file": "certs/server.key"
+        },
+        "auth": {
+            "enabled": true,
+            "jwt_secret": "change_this_in_production",
+            "token_expiry": 3600
+        }
+    },
+    "monitoring": {
+        "prometheus": {
+            "enabled": true,
+            "port": 9090
+        },
+        "alerting": {
+            "email": {
+                "enabled": true,
+                "smtp_server": "smtp.example.com",
+                "smtp_port": 587,
+                "username": "alerts@example.com",
+                "password": "change_this_in_production",
+                "from_address": "siem@example.com",
+                "to_addresses": ["security@example.com"]
+            },
+            "webhook": {
+                "enabled": true,
+                "url": "https://hooks.slack.com/services/your/webhook/url",
+                "custom_headers": {}
+            }
+        }
+    },
+    "compliance": {
+        "enabled": true,
+        "frameworks": ["PCI-DSS", "HIPAA", "ISO27001"],
+        "scan_interval": 86400,
+        "report_path": "reports/compliance"
+    }
+}

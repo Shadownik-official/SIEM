@@ -1,0 +1,118 @@
+{
+    "features": {
+        "anomaly": [
+            "bytes_transferred",
+            "packet_count",
+            "connection_duration",
+            "protocol",
+            "source_port",
+            "destination_port",
+            "source_ip_entropy",
+            "destination_ip_entropy",
+            "payload_entropy",
+            "time_of_day"
+        ],
+        "classification": [
+            "bytes_transferred",
+            "packet_count",
+            "connection_duration",
+            "protocol",
+            "source_port",
+            "destination_port",
+            "source_ip_entropy",
+            "destination_ip_entropy",
+            "payload_entropy",
+            "time_of_day",
+            "connection_state",
+            "tcp_flags",
+            "icmp_type",
+            "http_method",
+            "http_status",
+            "ssl_version",
+            "dns_query_type"
+        ],
+        "deep_learning": [
+            "bytes_transferred",
+            "packet_count",
+            "connection_duration",
+            "protocol_encoded",
+            "source_port",
+            "destination_port",
+            "source_ip_entropy",
+            "destination_ip_entropy",
+            "payload_entropy",
+            "time_of_day",
+            "connection_state_encoded",
+            "tcp_flags_encoded",
+            "icmp_type_encoded",
+            "http_method_encoded",
+            "http_status",
+            "ssl_version_encoded",
+            "dns_query_type_encoded",
+            "payload_signature",
+            "header_signature",
+            "flow_signature"
+        ]
+    },
+    "threshold": {
+        "anomaly": 0.95,
+        "classification": 0.85,
+        "deep_learning": 0.90
+    },
+    "model_parameters": {
+        "anomaly": {
+            "n_estimators": 100,
+            "contamination": "auto",
+            "random_state": 42,
+            "max_samples": "auto"
+        },
+        "classification": {
+            "n_estimators": 200,
+            "max_depth": 10,
+            "random_state": 42,
+            "class_weight": "balanced",
+            "n_jobs": -1
+        },
+        "deep_learning": {
+            "learning_rate": 0.001,
+            "batch_size": 32,
+            "epochs": 100,
+            "dropout_rate": 0.3,
+            "optimizer": "adam",
+            "loss": "binary_crossentropy"
+        }
+    },
+    "training": {
+        "validation_split": 0.2,
+        "test_split": 0.1,
+        "early_stopping_patience": 10,
+        "cross_validation_folds": 5
+    },
+    "feature_extraction": {
+        "window_size": 300,
+        "overlap": 0.5,
+        "min_samples": 1000,
+        "max_samples": 1000000
+    },
+    "performance_monitoring": {
+        "metrics": [
+            "accuracy",
+            "precision",
+            "recall",
+            "f1",
+            "auc",
+            "false_positive_rate",
+            "true_positive_rate"
+        ],
+        "threshold_adjustment": {
+            "enabled": true,
+            "optimization_metric": "f1",
+            "min_precision": 0.9
+        }
+    },
+    "logging": {
+        "level": "INFO",
+        "file": "ml_detector.log",
+        "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    }
+}
