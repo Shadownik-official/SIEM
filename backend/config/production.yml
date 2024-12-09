@@ -1,0 +1,29 @@
+# Production SIEM Configuration
+
+# Inherit base configuration
+environment: production
+debug: false
+log_level: WARNING
+
+# Override base database settings for production
+database:
+  host: prod_db_host
+  port: 5432
+  name: siem_prod_db
+  user: siem_prod_user
+  password: secure_prod_password
+  pool_size: 50
+
+# Strict security settings for production
+security:
+  jwt_secret_key: generate_a_very_secure_secret_key_here
+  jwt_algorithm: HS256
+  jwt_expiration_minutes: 30
+  password_min_length: 16
+
+# Production collectors
+collectors:
+  - system_logs
+  - network_traffic
+  - security_events
+  - compliance_logs

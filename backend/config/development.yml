@@ -1,0 +1,26 @@
+# Development SIEM Configuration
+
+# Inherit base configuration
+environment: development
+debug: true
+log_level: DEBUG
+
+# Override base database settings for development
+database:
+  host: localhost
+  port: 5432
+  name: siem_dev_db
+  user: siem_dev_user
+  password: dev_password
+
+# Security settings for development
+security:
+  jwt_secret_key: dev_secret_key_change_in_production
+  jwt_expiration_minutes: 120
+
+# Additional collectors for development
+collectors:
+  - system_logs
+  - network_traffic
+  - security_events
+  - debug_collector

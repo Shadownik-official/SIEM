@@ -1,0 +1,30 @@
+# Base SIEM Configuration
+
+# Core Settings
+environment: base
+debug: false
+log_level: INFO
+
+# Agent Configuration
+agent_collection_interval: 60
+max_queue_size: 1000
+
+# Database Configuration
+database:
+  host: localhost
+  port: 5432
+  name: siem_db
+  user: siem_user
+  pool_size: 10
+
+# Security Settings
+security:
+  jwt_algorithm: HS256
+  jwt_expiration_minutes: 30
+  password_min_length: 12
+
+# Collectors
+collectors:
+  - system_logs
+  - network_traffic
+  - security_events
