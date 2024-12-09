@@ -136,5 +136,5 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 For support:
 - Open an issue
-- Contact security@example.com
+- Contact info@shadownik.online
 - Join our security community
