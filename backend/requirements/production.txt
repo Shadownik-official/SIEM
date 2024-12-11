@@ -1,8 +1,0 @@
-# Production requirements
--r base.txt
-
-# Production-specific packages
-gunicorn>=20.1.0
-uvicorn[standard]>=0.15.0
-prometheus-client>=0.11.0
-python-json-logger>=2.0.2
