@@ -1,5 +1,0 @@
-{"level":"error","message":"File monitoring error: Error: EPERM: operation not permitted, watch 'C:\\Windows\\System32\\Tasks'","timestamp":"2024-11-26T13:54:14.182Z"}
-{"level":"error","message":"File monitoring error: Error: EPERM: operation not permitted, watch 'C:\\Windows\\System32\\Com\\dmp'","timestamp":"2024-11-26T13:54:24.701Z"}
-{"level":"error","message":"File monitoring error: Error: EPERM: operation not permitted, watch 'C:\\Windows\\System32\\spool\\SERVERS'","timestamp":"2024-11-26T13:54:24.701Z"}
-{"level":"error","message":"File monitoring error: Error: EPERM: operation not permitted, watch 'C:\\Windows\\System32\\spool\\PRINTERS'","timestamp":"2024-11-26T13:54:24.701Z"}
-{"level":"error","message":"File monitoring error: Error: EPERM: operation not permitted, watch 'C:\\Windows\\System32\\Com\\dmp'","timestamp":"2024-11-26T13:54:24.704Z"}

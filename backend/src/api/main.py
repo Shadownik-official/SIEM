@@ -106,6 +106,65 @@ async def get_alerts(
         logger.error(f"Error retrieving alerts: {str(e)}")
         raise HTTPException(status_code=500, detail="Error retrieving alerts")
 
+# Dashboard endpoints
+@app.get("/dashboard/summary")
+async def get_dashboard_summary(token: str = Depends(oauth2_scheme)):
+    """Get summary statistics for the dashboard"""
+    try:
+        return {
+            "total_events": await get_total_events(),
+            "events_by_severity": await get_events_by_severity(),
+            "recent_alerts": await get_recent_alerts(limit=5),
+            "system_health": await get_system_health(),
+            "top_threats": await get_top_threats(limit=10)
+        }
+    except Exception as e:
+        logger.error(f"Error getting dashboard summary: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error retrieving dashboard data")
+
+@app.get("/dashboard/metrics")
+async def get_system_metrics(
+    time_range: str = "24h",
+    token: str = Depends(oauth2_scheme)
+):
+    """Get system metrics for specified time range"""
+    try:
+        return {
+            "cpu_usage": await get_cpu_metrics(time_range),
+            "memory_usage": await get_memory_metrics(time_range),
+            "network_traffic": await get_network_metrics(time_range),
+            "event_frequency": await get_event_frequency(time_range)
+        }
+    except Exception as e:
+        logger.error(f"Error getting system metrics: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error retrieving system metrics")
+
+@app.get("/dashboard/threats")
+async def get_threat_analysis(token: str = Depends(oauth2_scheme)):
+    """Get threat analysis data"""
+    try:
+        return {
+            "threat_map": await get_geographical_threats(),
+            "threat_types": await get_threat_categories(),
+            "attack_vectors": await get_attack_vectors(),
+            "compromised_assets": await get_compromised_assets()
+        }
+    except Exception as e:
+        logger.error(f"Error getting threat analysis: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error retrieving threat data")
+
+@app.post("/settings")
+async def update_settings(
+    settings: dict,
+    token: str = Depends(oauth2_scheme)
+):
+    """Update system settings"""
+    try:
+        return await save_settings(settings)
+    except Exception as e:
+        logger.error(f"Error updating settings: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error updating settings")
+
 # Configuration endpoints
 @app.get("/config")
 async def get_configuration(token: str = Depends(oauth2_scheme)):

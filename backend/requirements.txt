@@ -1,14 +1,15 @@
 # Core Dependencies
-fastapi
-uvicorn
-python-jose
-passlib
-python-multipart
-pydantic
-sqlalchemy
+fastapi>=0.68.0
+uvicorn>=0.15.0
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+python-multipart>=0.0.5
+pydantic>=1.8.2
+sqlalchemy>=1.4.23
 elasticsearch
 redis
 kafka-python
+aiohttp>=3.8.1
 
 # Security
 cryptography
@@ -22,19 +23,21 @@ pytest-asyncio
 
 # Network Scanning & Security
 python-nmap
-requests
+requests>=2.26.0
 paramiko
 scapy
 netaddr
 
 # Logging & Monitoring
 structlog
-python-json-logger
+python-json-logger>=2.0.2
+aiologstash>=2.0.0
 
 # System Information
-psutil
+psutil>=5.8.0
 distro
 wmi; platform_system == "Windows"
+pywin32>=303; sys_platform == 'win32'
 
 # Database
 alembic
@@ -42,3 +45,10 @@ sqlmodel
 
 # Agent Dependencies
 watchdog
+
+# Threat Intelligence and Log Collection
+pandas>=1.3.3
+scikit-learn>=0.24.2
+numpy>=1.21.2
+python-dateutil>=2.8.2
+pyyaml>=6.0.0
