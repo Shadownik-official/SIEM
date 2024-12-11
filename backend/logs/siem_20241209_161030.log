@@ -1,0 +1,12 @@
+2024-12-09 16:10:30,687 - __main__ - INFO - Starting SIEM system...
+2024-12-09 16:10:30,694 - __main__ - INFO - Configuration loaded successfully
+2024-12-09 16:10:30,694 - __main__ - INFO - Database initialized successfully
+2024-12-09 16:10:30,695 - __main__ - INFO - Universal Agent initialized
+2024-12-09 16:10:30,695 - src.intelligence.threat_intelligence - WARNING - ML model path not found, ML features disabled
+2024-12-09 16:10:30,696 - __main__ - INFO - Threat Intelligence module initialized
+2024-12-09 16:10:30,698 - src.agents.cross_platform_agent - INFO - Starting Universal Agent on windows
+2024-12-09 16:10:30,719 - __main__ - INFO - SIEM system started successfully
+2024-12-09 16:10:30,719 - src.agents.cross_platform_agent - INFO - Processing event: network_info
+2024-12-09 16:10:30,720 - src.agents.cross_platform_agent - INFO - Processing event: system_resources
+2024-12-09 16:10:30,875 - src.agents.cross_platform_agent - INFO - Processing event: system_info
+2024-12-09 16:10:37,569 - src.agents.cross_platform_agent - INFO - Processing event: processes

@@ -1,0 +1,14 @@
+2024-12-09 16:30:15,060 - siem_error_handler - CRITICAL: [d281cbba-930d-446b-8cac-dcae6f225952] ConfigLoader: 'path'
+2024-12-09 16:30:15,061 - siem_error_handler - CRITICAL: [7d1a71db-68ed-4bd2-b21d-cd797fa7fbbc] ConfigLoader: 'path'
+2024-12-09 16:31:00,831 - siem_error_handler - CRITICAL: [75b8ec0e-8d91-452a-b3e7-d9f5c79af897] ConfigLoader: 'path'
+2024-12-09 16:31:00,832 - siem_error_handler - CRITICAL: [b5181c23-da07-4b81-9c2f-a78f10f09e4f] ConfigLoader: 'path'
+2024-12-09 16:31:29,285 - siem_error_handler - CRITICAL: [cd27e749-b5da-4183-b876-f71aec8d2b0e] ConfigLoader: 'path'
+2024-12-09 16:31:29,285 - siem_error_handler - CRITICAL: [48a80c1d-cba5-40d4-96a5-cedd9ab20525] ConfigLoader: 'path'
+2024-12-09 16:32:06,499 - siem_error_handler - ERROR: [58e22f2b-fadb-4ce9-b232-48d0c3a86345] ConfigValidator: Missing database configuration key: type
+2024-12-09 16:32:06,502 - siem_error_handler - CRITICAL: [17c5bacc-f0df-4162-b36d-550172327b39] ConfigLoader: Configuration validation failed
+2024-12-09 16:32:06,504 - siem_error_handler - ERROR: [a41f4bea-2edd-4439-b299-aebbc420bfdd] ConfigValidator: Missing database configuration key: type
+2024-12-09 16:32:06,504 - siem_error_handler - CRITICAL: [40c8e64a-9f27-4de8-a1c5-e1f62be93f29] ConfigLoader: Configuration validation failed
+2024-12-09 16:32:06,506 - siem_error_handler - ERROR: [480b2574-da04-4c82-a139-a0d9e30c927c] ConfigValidator: Missing database configuration key: type
+2024-12-09 16:32:06,507 - siem_error_handler - CRITICAL: [d2fd79a4-9e53-4489-8768-1a8b258bce65] ConfigLoader: Configuration validation failed
+2024-12-09 18:27:20,351 - siem_error_handler - CRITICAL: [7814a26b-d2aa-4951-b23f-3e084f9bdd3b] ConfigLoader: SIEMConfig.__init__() got an unexpected keyword argument 'threat_intelligence'
+2024-12-09 18:29:39,997 - siem_error_handler - CRITICAL: [87c339c3-975c-4bdb-a1dd-70f5c881d7c1] ConfigLoader: SIEMConfig.__init__() got an unexpected keyword argument 'logging'

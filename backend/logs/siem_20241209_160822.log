@@ -1,0 +1,6 @@
+2024-12-09 16:08:22,043 - __main__ - INFO - Starting SIEM system...
+2024-12-09 16:08:22,044 - __main__ - INFO - Configuration loaded successfully
+2024-12-09 16:08:22,044 - __main__ - INFO - Database initialized successfully
+2024-12-09 16:08:22,044 - __main__ - INFO - Universal Agent initialized
+2024-12-09 16:08:22,045 - src.intelligence.threat_intelligence - WARNING - ML model path not found, ML features disabled
+2024-12-09 16:08:22,046 - __main__ - INFO - Threat Intelligence module initialized

@@ -5,104 +5,184 @@ Initializes and starts all SIEM components
 import os
 import sys
 import logging
+import logging.handlers
+import logging.config
 import argparse
 import json
 from datetime import datetime
 from src.agents.cross_platform_agent import UniversalAgent
 from src.intelligence.threat_intelligence import ThreatIntelligence
+from src.core.config import SIEMConfig, ConfigurationError
+from src.utils.database import DatabaseManager
 import signal
+from typing import Optional
+import time
+import threading
+import queue
 
 # Global variables for cleanup
 siem_components = []
+
+# Global event to control the main loop
+shutdown_event = threading.Event()
 
 def signal_handler(signum, frame):
     """Handle shutdown signals"""
     logger = logging.getLogger(__name__)
     logger.info("Received shutdown signal. Cleaning up...")
+    shutdown_event.set()
     for component in siem_components:
         if hasattr(component, 'shutdown'):
             component.shutdown()
     sys.exit(0)
 
-def setup_logging(log_level='INFO'):
-    """Configure logging"""
-    log_dir = 'logs'
-    if not os.path.exists(log_dir):
-        os.makedirs(log_dir)
-        
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    log_file = os.path.join(log_dir, f'siem_{timestamp}.log')
+def setup_logging(config: Optional[SIEMConfig] = None):
+    """
+    Set up comprehensive logging configuration.
     
-    logging.basicConfig(
-        level=getattr(logging, log_level.upper()),
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.FileHandler(log_file),
-            logging.StreamHandler(sys.stdout)
-        ]
-    )
+    :param config: Optional SIEM configuration object
+    """
+    # Use default configuration if not provided
+    if config is None:
+        config = SIEMConfig()
+    
+    # Ensure logs directory exists
+    log_dir = os.path.join(config.base_dir, 'logs')
+    os.makedirs(log_dir, exist_ok=True)
+    
+    # Use configuration's logging configuration
+    logging_config = config.get_log_configuration()
+    
+    # Apply logging configuration
+    logging.config.dictConfig(logging_config)
+    
+    # Create a custom log filter for sensitive data
+    class SensitiveDataFilter(logging.Filter):
+        def filter(self, record):
+            record.msg = config.mask_sensitive_data(str(record.msg))
+            return True
+    
+    # Add sensitive data filter to all loggers
+    root_logger = logging.getLogger()
+    root_logger.addFilter(SensitiveDataFilter())
+    
     return logging.getLogger(__name__)
 
-def load_config(config_file):
-    """Load configuration from file"""
-    with open(config_file, 'r') as f:
-        return json.load(f)
-
-def start_siem(config_file, log_level='INFO'):
-    """Initialize and start SIEM components"""
-    logger = setup_logging(log_level)
-    logger.info("Starting SIEM system...")
+def start_siem(config: Optional[SIEMConfig] = None):
+    """
+    Initialize and start SIEM system components
     
+    :param config: Optional configuration object
+    """
+    # Register signal handlers
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+
+    # Setup logging first
+    logger = setup_logging(config)
+    logger.info("Starting SIEM system...")
+
+    # Ensure config directory exists
+    config_dir = os.path.join(os.path.dirname(__file__), 'config')
+    os.makedirs(config_dir, exist_ok=True)
+
+    # Improved configuration loading with error handling
+    config_files = [
+        os.path.join(config_dir, 'base.yml'),
+        os.path.join(config_dir, 'development.yml'),
+        os.path.join(config_dir, 'production.yml')
+    ]
+    
+    # Create default configuration files if they don't exist
+    for config_file in config_files:
+        if not os.path.exists(config_file):
+            try:
+                with open(config_file, 'w') as f:
+                    f.write("# Default SIEM Configuration\n")
+                logger.info(f"Created default config file: {config_file}")
+            except Exception as e:
+                logger.warning(f"Could not create default config file {config_file}: {e}")
+
+    # If no config is provided, use default
+    if config is None:
+        config = SIEMConfig()
+    
+    logger.info("Configuration initialized successfully")
+
+    # Initialize components
     try:
-        # Load configuration
-        config = load_config(config_file)
-        logger.info("Configuration loaded successfully")
+        # Initialize database
+        db_manager = DatabaseManager(config)
+        siem_components.append(db_manager)
+        logger.info("Database initialized successfully")
+
+        # Initialize Universal Agent
+        universal_agent = UniversalAgent(config)
+        siem_components.append(universal_agent)
+        logger.info("Universal Agent initialized")
+
+        # Initialize Threat Intelligence
+        threat_intel = ThreatIntelligence(config)
+        siem_components.append(threat_intel)
+        logger.info("Threat Intelligence module initialized")
+
+        logger.info("SIEM system started successfully")
+
+        # Main monitoring loop with graceful shutdown
+        while not shutdown_event.is_set():
+            try:
+                # Perform periodic system health checks
+                for component in siem_components:
+                    if hasattr(component, 'health_check'):
+                        component.health_check()
+                
+                # Sleep to prevent tight loop
+                time.sleep(10)  # Check every 10 seconds
+            
+            except KeyboardInterrupt:
+                logger.info("Keyboard interrupt received. Shutting down...")
+                break
+            except Exception as e:
+                logger.error(f"Error in main monitoring loop: {e}")
+                time.sleep(5)  # Prevent rapid error looping
         
-        # Initialize components
-        agent = UniversalAgent(config.get('agent', {}))
-        intel = ThreatIntelligence(config.get('intelligence', {}))
+        # Graceful shutdown
+        logger.info("Initiating graceful shutdown...")
+        for component in reversed(siem_components):
+            if hasattr(component, 'shutdown'):
+                try:
+                    component.shutdown()
+                except Exception as e:
+                    logger.error(f"Error during shutdown of {component}: {e}")
         
-        # Add components to global list for cleanup
-        global siem_components
-        siem_components.extend([agent, intel])
-        
-        logger.info("SIEM components initialized successfully")
-        
-        # Register signal handlers
-        signal.signal(signal.SIGINT, signal_handler)
-        signal.signal(signal.SIGTERM, signal_handler)
-        
-        # Start monitoring
-        logger.info("Starting event monitoring...")
-        agent.start_monitoring()
-        
-    except FileNotFoundError as e:
-        logger.error(f"Configuration file not found: {str(e)}")
-        sys.exit(1)
-    except json.JSONDecodeError as e:
-        logger.error(f"Invalid configuration file format: {str(e)}")
-        sys.exit(1)
+        logger.info("SIEM system shutdown complete")
+    
     except Exception as e:
-        logger.error(f"Error starting SIEM: {str(e)}")
-        sys.exit(1)
+        logger.error(f"Critical error during SIEM system initialization: {e}")
+        # Attempt to shutdown any initialized components
+        for component in siem_components:
+            if hasattr(component, 'shutdown'):
+                try:
+                    component.shutdown()
+                except Exception:
+                    pass
+        
+        raise  # Re-raise to ensure visibility of the critical error
 
 def main():
-    """Main entry point"""
-    parser = argparse.ArgumentParser(description='SIEM System Startup')
-    parser.add_argument(
-        '--config',
-        default='config/siem_config.json',
-        help='Path to configuration file'
-    )
-    parser.add_argument(
-        '--log-level',
-        default='INFO',
-        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
-        help='Logging level'
-    )
+    """Main entry point for SIEM system"""
+    parser = argparse.ArgumentParser(description="SIEM System Startup")
+    parser.add_argument('--log-level', default='INFO', 
+                        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
+                        help='Set the logging level')
     
     args = parser.parse_args()
-    start_siem(args.config, args.log_level)
+
+    try:
+        start_siem()
+    except Exception as e:
+        print(f"Failed to start SIEM system: {e}")
+        sys.exit(1)
 
 if __name__ == '__main__':
     main()

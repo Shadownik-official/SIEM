@@ -1,0 +1,5 @@
+2024-12-09 16:05:39,345 - __main__ - INFO - Starting SIEM system...
+2024-12-09 16:05:39,345 - __main__ - INFO - Configuration loaded successfully
+2024-12-09 16:05:39,345 - __main__ - INFO - Database initialized successfully
+2024-12-09 16:05:39,345 - __main__ - INFO - Universal Agent initialized
+2024-12-09 16:05:39,345 - __main__ - ERROR - Threat Intelligence initialization failed: Database.__init__() missing 1 required positional argument: 'db_path'

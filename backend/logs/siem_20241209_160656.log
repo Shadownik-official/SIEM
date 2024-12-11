@@ -1,0 +1,5 @@
+2024-12-09 16:06:56,375 - __main__ - INFO - Starting SIEM system...
+2024-12-09 16:06:56,375 - __main__ - INFO - Configuration loaded successfully
+2024-12-09 16:06:56,375 - __main__ - INFO - Database initialized successfully
+2024-12-09 16:06:56,376 - __main__ - INFO - Universal Agent initialized
+2024-12-09 16:06:56,388 - __main__ - ERROR - Threat Intelligence initialization failed: 'ThreatIntelligence' object has no attribute '_initialize_feeds'

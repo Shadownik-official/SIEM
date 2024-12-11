@@ -4,7 +4,7 @@ Integrates multiple threat feeds and provides comprehensive threat analysis
 """
 import logging
 import json
-from typing import Dict, List, Optional, Union, Tuple
+from typing import Dict, Any, List, Optional, Union, Tuple, Set, FrozenSet, Type, TypeVar, Callable, Iterator, Generator, overload, Literal, Protocol, runtime_checkable
 from dataclasses import dataclass
 from datetime import datetime
 import uuid
@@ -12,13 +12,37 @@ import requests
 import stix2
 from stix2 import Filter
 from taxii2client.v20 import Server
-from ..core.utils import encrypt_data, decrypt_data
+from ..core.utils import SecurityUtils, encrypt_data, decrypt_data
 from ..core.database import Database
 import numpy as np
 import threading
 import time
 from functools import lru_cache
 import os
+from ..core.config import SIEMConfig
+from ..models.base import Base, BaseModel
+import joblib
+from src.core.error_handler import error_handler, ErrorSeverity
+from src.core.performance import performance_monitor
+
+# Wrapper functions to maintain backwards compatibility
+def encrypt_data(data, key=None):
+    """
+    Wrapper function for data encryption
+    """
+    if key is None:
+        key, _ = SecurityUtils.generate_encryption_key("default_threat_key")
+    
+    return SecurityUtils.encrypt_data(data, key)
+
+def decrypt_data(encrypted_data, key=None):
+    """
+    Wrapper function for data decryption
+    """
+    if key is None:
+        key, _ = SecurityUtils.generate_encryption_key("default_threat_key")
+    
+    return SecurityUtils.decrypt_data(encrypted_data, key)
 
 @dataclass
 class ThreatIndicator:
@@ -50,38 +74,272 @@ class ThreatActor:
     first_seen: datetime
     last_seen: datetime
 
+class ThreatIntelligenceEnhanced:
+    """
+    Advanced Threat Intelligence Module with Multi-Source Analysis
+    """
+    def __init__(self, config: Dict[str, Any]):
+        self.config = config
+        self.logger = logging.getLogger(__name__)
+        self.threat_feeds = []
+        self.ml_models = {}
+        
+        # Initialize threat intelligence components
+        self._load_threat_feeds()
+        self._load_ml_models()
+    
+    @performance_monitor.track_performance
+    def _load_threat_feeds(self):
+        """
+        Load threat intelligence feeds from configuration
+        """
+        try:
+            # Get threat feeds configuration
+            feeds_config = self.config.get('threat_intelligence', {}).get('feeds', [])
+            
+            # Filter and load enabled feeds
+            self.threat_feeds = [
+                feed for feed in feeds_config 
+                if feed.get('enabled', False)
+            ]
+            
+            self.logger.info(f"Loaded {len(self.threat_feeds)} threat feeds")
+            
+            # Log feed details
+            for feed in self.threat_feeds:
+                self.logger.info(f"Enabled Feed: {feed['name']} (Type: {feed['type']})")
+        
+        except Exception as e:
+            self.logger.error(f"Error loading threat feeds: {e}")
+            self.threat_feeds = []
+    
+    @performance_monitor.track_performance
+    def _load_ml_models(self):
+        """
+        Load multiple machine learning models for threat detection
+        """
+        try:
+            # Get ML model configuration
+            ml_config = self.config.get('threat_intelligence', {}).get('ml_models', {})
+            default_model_path = ml_config.get('default_path', '')
+            
+            # Check if model path exists
+            if not os.path.exists(default_model_path):
+                self.logger.warning(f"ML model path not found: {default_model_path}")
+                return {}
+            
+            # Load default anomaly detection model
+            default_model = joblib.load(default_model_path)
+            
+            # Configure model parameters
+            anomaly_config = ml_config.get('anomaly_detection', {})
+            default_model.contamination = anomaly_config.get('contamination', 0.1)
+            
+            # Store models
+            self.ml_models = {
+                'anomaly_detection': default_model
+            }
+            
+            self.logger.info(f"Loaded {len(self.ml_models)} ML models successfully")
+        except Exception as e:
+            self.logger.error(f"Error loading ML models: {e}")
+            self.ml_models = {}
+    
+    def analyze_threat(self, event_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Comprehensive threat analysis using multiple models and feeds
+        
+        :param event_data: Event data to analyze
+        :return: Threat analysis results
+        """
+        try:
+            threat_scores = {}
+            
+            # Analyze using threat feeds
+            for feed in self.threat_feeds:
+                feed_score = self._evaluate_feed(feed, event_data)
+                threat_scores[feed.get('name', 'Unknown Feed')] = feed_score
+            
+            # Analyze using ML models
+            for model_name, model in self.ml_models.items():
+                ml_score = self._evaluate_ml_model(model, event_data)
+                threat_scores[model_name] = ml_score
+            
+            # Aggregate threat scores
+            total_threat_score = self._aggregate_threat_scores(threat_scores)
+            
+            return {
+                'threat_scores': threat_scores,
+                'total_threat_score': total_threat_score,
+                'is_threat': total_threat_score > 0.7  # Configurable threshold
+            }
+        except Exception as e:
+            error_handler.handle_error(
+                'ThreatIntelligence', 
+                e, 
+                ErrorSeverity.MEDIUM
+            )
+            return {'error': str(e)}
+    
+    def _evaluate_feed(self, feed: Dict[str, Any], event_data: Dict[str, Any]) -> float:
+        """
+        Evaluate threat based on feed rules
+        
+        :param feed: Threat feed data
+        :param event_data: Event to evaluate
+        :return: Threat score
+        """
+        # Implement feed-specific threat evaluation logic
+        return 0.0
+    
+    def _evaluate_ml_model(self, model, event_data: Dict[str, Any]) -> float:
+        """
+        Evaluate threat using ML model
+        
+        :param model: ML model
+        :param event_data: Event to evaluate
+        :return: Threat probability
+        """
+        try:
+            # Preprocess event data
+            processed_data = self._preprocess_event_data(event_data)
+            
+            # Predict threat probability
+            threat_probability = model.predict_proba([processed_data])[0][1]
+            return float(threat_probability)
+        except Exception as e:
+            error_handler.handle_error(
+                'MLThreatEvaluation', 
+                e, 
+                ErrorSeverity.LOW
+            )
+            return 0.0
+    
+    def _preprocess_event_data(self, event_data: Dict[str, Any]) -> np.ndarray:
+        """
+        Preprocess event data for ML models
+        
+        :param event_data: Raw event data
+        :return: Preprocessed numpy array
+        """
+        # Implement data preprocessing logic
+        return np.array([0.0])  # Placeholder
+    
+    def _aggregate_threat_scores(self, threat_scores: Dict[str, float]) -> float:
+        """
+        Aggregate threat scores from multiple sources
+        
+        :param threat_scores: Dictionary of threat scores
+        :return: Aggregated threat score
+        """
+        if not threat_scores:
+            return 0.0
+        
+        # Weighted average of threat scores
+        scores = list(threat_scores.values())
+        return np.mean(scores)
+    
+    def generate_threat_report(self) -> Dict[str, Any]:
+        """
+        Generate comprehensive threat intelligence report
+        
+        :return: Threat report
+        """
+        try:
+            return {
+                'total_feeds': len(self.threat_feeds),
+                'total_models': len(self.ml_models),
+                'last_updated': str(datetime.now())
+            }
+        except Exception as e:
+            error_handler.handle_error(
+                'ThreatReport', 
+                e, 
+                ErrorSeverity.LOW
+            )
+            return {}
+
 class ThreatIntelligence:
     """Advanced threat intelligence system with comprehensive analysis capabilities."""
     
-    def __init__(self, config: Dict = None):
-        self.logger = logging.getLogger(__name__)
-        self.db = Database()
-        self.config = config or self._load_default_config()
-        self.feeds = self._initialize_feeds()
-        self.stix_server = self._initialize_stix_server()
-        self.indicator_cache = {}
-        self.actor_cache = {}
-        self.running = False
-        self.update_thread = None
-        self._initialize_ml_components()
-        self._start_feed_updates()
+    def __init__(self, config: Optional[SIEMConfig] = None):
+        """
+        Initialize threat intelligence system
         
+        :param config: SIEM configuration object
+        """
+        self.logger = logging.getLogger(__name__)
+        
+        # Use provided config or load default
+        self.config = config or SIEMConfig()
+        
+        # Initialize database with config
+        db_path = self.config.database.get('path')
+        self.db = Database(db_path)
+        
+        # Threat intelligence components
+        self.threat_feeds = []
+        self.ml_models = {}
+        
+        # Initialize components
+        self._initialize_ml_components()
+        self._initialize_threat_feeds()
+
     def _initialize_ml_components(self):
-        """Initialize machine learning components"""
+        """
+        Initialize machine learning components for threat detection
+        """
         try:
-            model_path = self.config.get('ml_config', {}).get('model_path')
-            if model_path and os.path.exists(model_path):
-                self.ml_model = self._load_ml_model(model_path)
-                self.feature_extractor = self._load_feature_extractor()
-            else:
-                self.logger.warning("ML model path not found, ML features disabled")
-                self.ml_model = None
-                self.feature_extractor = None
-        except Exception as e:
-            self.logger.error(f"Error initializing ML components: {str(e)}")
-            self.ml_model = None
-            self.feature_extractor = None
+            # Get ML model configuration
+            ml_config = self.config.threat_intelligence.get('ml_models', {})
+            default_model_path = ml_config.get('default_path', '')
             
+            # Check if model path exists
+            if not os.path.exists(default_model_path):
+                self.logger.warning(f"ML model path not found: {default_model_path}")
+                return
+            
+            # Load default anomaly detection model
+            default_model = joblib.load(default_model_path)
+            
+            # Configure model parameters
+            anomaly_config = ml_config.get('anomaly_detection', {})
+            default_model.contamination = anomaly_config.get('contamination', 0.1)
+            
+            # Store models
+            self.ml_models = {
+                'anomaly_detection': default_model
+            }
+            
+            self.logger.info(f"Loaded {len(self.ml_models)} ML models successfully")
+        except Exception as e:
+            self.logger.error(f"Error initializing ML components: {e}")
+            self.ml_models = {}
+
+    def _initialize_threat_feeds(self):
+        """
+        Initialize threat intelligence feeds from configuration
+        """
+        try:
+            # Get threat feeds configuration
+            feeds_config = self.config.threat_intelligence.get('feeds', [])
+            
+            # Filter and load enabled feeds
+            self.threat_feeds = [
+                feed for feed in feeds_config 
+                if feed.get('enabled', False)
+            ]
+            
+            self.logger.info(f"Loaded {len(self.threat_feeds)} threat feeds")
+            
+            # Log feed details
+            for feed in self.threat_feeds:
+                self.logger.info(f"Enabled Feed: {feed['name']} (Type: {feed['type']})")
+    
+        except Exception as e:
+            self.logger.error(f"Error loading threat feeds: {e}")
+            self.threat_feeds = []
+
     def shutdown(self):
         """Gracefully shutdown the threat intelligence system"""
         self.logger.info("Shutting down threat intelligence system...")
@@ -510,3 +768,99 @@ class ThreatIntelligence:
             base_score += severity_weights.get(severity, 0.1) * confidence
             
         return min(base_score, 1.0) * 10  # Scale to 0-10
+
+    def _initialize_feeds(self) -> List[Dict]:
+        """
+        Initialize threat intelligence feeds.
+        
+        :return: List of configured threat feeds
+        """
+        default_feeds = [
+            {
+                'name': 'AlienVault OTX',
+                'type': 'otx',
+                'url': 'https://otx.alienvault.com/api/v1/indicators',
+                'enabled': True
+            },
+            {
+                'name': 'VirusTotal',
+                'type': 'virustotal',
+                'url': 'https://www.virustotal.com/api/v3/indicators',
+                'enabled': False  # Requires API key
+            },
+            {
+                'name': 'MISP',
+                'type': 'misp',
+                'url': 'https://misp.example.com/feeds',
+                'enabled': False
+            }
+        ]
+        
+        # Override with config if provided
+        configured_feeds = self.config.get('threat_feeds', default_feeds)
+        
+        # Filter enabled feeds
+        return [feed for feed in configured_feeds if feed.get('enabled', False)]
+
+    def _initialize_stix_server(self) -> Optional[Server]:
+        """
+        Initialize STIX threat intelligence server.
+        
+        :return: TAXII2 Server instance or None
+        """
+        try:
+            stix_config = self.config.get('stix_config', {})
+            if not stix_config.get('enabled', False):
+                return None
+            
+            server_url = stix_config.get('server_url')
+            if not server_url:
+                self.logger.warning("No STIX server URL configured")
+                return None
+            
+            return Server(server_url)
+        except Exception as e:
+            self.logger.error(f"Error initializing STIX server: {e}")
+            return None
+
+    def _update_feeds(self):
+        """
+        Update threat intelligence feeds.
+        """
+        for feed in self.feeds:
+            try:
+                if feed['type'] == 'otx':
+                    self._update_otx_feed(feed)
+                elif feed['type'] == 'virustotal':
+                    self._update_virustotal_feed(feed)
+                elif feed['type'] == 'misp':
+                    self._update_misp_feed(feed)
+            except Exception as e:
+                self.logger.error(f"Error updating feed {feed['name']}: {e}")
+
+    def _update_otx_feed(self, feed: Dict):
+        """
+        Update OTX threat feed.
+        
+        :param feed: Feed configuration
+        """
+        # Placeholder for OTX feed update logic
+        pass
+
+    def _update_virustotal_feed(self, feed: Dict):
+        """
+        Update VirusTotal threat feed.
+        
+        :param feed: Feed configuration
+        """
+        # Placeholder for VirusTotal feed update logic
+        pass
+
+    def _update_misp_feed(self, feed: Dict):
+        """
+        Update MISP threat feed.
+        
+        :param feed: Feed configuration
+        """
+        # Placeholder for MISP feed update logic
+        pass

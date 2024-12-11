@@ -7,6 +7,8 @@ log_level: DEBUG
 
 # Override base database settings for development
 database:
+  type: sqlite
+  path: ./siem_dev.db
   host: localhost
   port: 5432
   name: siem_dev_db
@@ -19,8 +21,4 @@ security:
   jwt_expiration_minutes: 120
 
 # Additional collectors for development
-collectors:
-  - system_logs
-  - network_traffic
-  - security_events
-  - debug_collector
+collectors: []
