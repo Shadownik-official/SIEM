@@ -1,3 +1,0 @@
-2024-12-09 16:02:11,933 - __main__ - INFO - Starting SIEM system...
-2024-12-09 16:02:11,934 - __main__ - INFO - Configuration loaded successfully
-2024-12-09 16:02:11,961 - __main__ - ERROR - Error starting SIEM: Database.__init__() missing 1 required positional argument: 'db_path'

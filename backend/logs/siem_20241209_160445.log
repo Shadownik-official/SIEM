@@ -1,4 +1,0 @@
-2024-12-09 16:04:45,893 - __main__ - INFO - Starting SIEM system...
-2024-12-09 16:04:45,894 - __main__ - INFO - Configuration loaded successfully
-2024-12-09 16:04:45,894 - __main__ - INFO - Database initialized successfully
-2024-12-09 16:04:45,898 - __main__ - ERROR - Agent initialization failed: 'SIEMConfig' object has no attribute 'get'
