@@ -1,0 +1,9 @@
+@echo off
+mkdir "e:\SIEM\SIEM\frontend\src\components\dashboard"
+mkdir "e:\SIEM\SIEM\frontend\src\components\alerts"
+mkdir "e:\SIEM\SIEM\frontend\src\components\threats"
+mkdir "e:\SIEM\SIEM\frontend\src\components\system"
+mkdir "e:\SIEM\SIEM\frontend\src\hooks"
+mkdir "e:\SIEM\SIEM\frontend\src\types"
+mkdir "e:\SIEM\SIEM\frontend\src\utils"
+mkdir "e:\SIEM\SIEM\frontend\src\styles"

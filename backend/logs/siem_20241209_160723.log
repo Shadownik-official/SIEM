@@ -1,5 +1,0 @@
-2024-12-09 16:07:23,119 - __main__ - INFO - Starting SIEM system...
-2024-12-09 16:07:23,119 - __main__ - INFO - Configuration loaded successfully
-2024-12-09 16:07:23,119 - __main__ - INFO - Database initialized successfully
-2024-12-09 16:07:23,119 - __main__ - INFO - Universal Agent initialized
-2024-12-09 16:07:23,123 - __main__ - ERROR - Threat Intelligence initialization failed: 'SIEMConfig' object has no attribute 'get'

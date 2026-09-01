@@ -26,6 +26,10 @@ class CollectorError(SIEMBaseException):
     """Raised when data collection encounters problems."""
     pass
 
+class LogCollectionError(CollectorError):
+    """Raised when log collection encounters specific problems."""
+    pass
+
 class EventProcessingError(SIEMBaseException):
     """Raised when event processing fails."""
     pass

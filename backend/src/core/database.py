@@ -97,3 +97,12 @@ class Database:
         if hasattr(self._local, "conn"):
             self._local.conn.close()
             del self._local.conn
+
+def get_db():
+    """
+    Get a database connection.
+    
+    Returns:
+        Database: A database connection instance
+    """
+    return Database('siem.db')

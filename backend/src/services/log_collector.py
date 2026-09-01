@@ -11,7 +11,7 @@ import re
 from pathlib import Path
 from datetime import datetime
 from ..models.event import Event, EventCategory, EventThreatLevel
-from ..database import get_db
+from ..core.database import get_db
 from ..core.exceptions import LogCollectionError
 
 class LogCollector:
