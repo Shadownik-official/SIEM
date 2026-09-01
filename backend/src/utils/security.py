@@ -1,87 +1,142 @@
-import secrets
-import hashlib
-import base64
-from typing import Optional
+from datetime import datetime, timedelta
+from typing import Any, Dict, Optional, Union
 
-class SecurityUtils:
-    """
-    Utility class for security-related operations.
-    """
-    @staticmethod
-    def generate_salt(length: int = 16) -> str:
-        """
-        Generate a cryptographically secure random salt.
-        
-        :param length: Length of the salt in bytes
-        :return: Base64 encoded salt
-        """
-        salt = secrets.token_bytes(length)
-        return base64.b64encode(salt).decode('utf-8')
+from jose import jwt
+from passlib.context import CryptContext
+from pydantic import BaseModel
 
-    @staticmethod
-    def hash_password(password: str, salt: Optional[str] = None) -> tuple:
-        """
-        Hash a password using SHA-256 with an optional salt.
-        
-        :param password: Plain text password
-        :param salt: Optional salt (will generate if not provided)
-        :return: Tuple of (salt, hashed_password)
-        """
-        if salt is None:
-            salt = SecurityUtils.generate_salt()
-        
-        # Combine password and salt
-        salted_password = f"{password}{salt}".encode('utf-8')
-        
-        # Hash using SHA-256
-        hashed_password = hashlib.sha256(salted_password).hexdigest()
-        
-        return salt, hashed_password
+from ..core.settings import get_settings
 
-    @staticmethod
-    def verify_password(plain_password: str, stored_salt: str, stored_hash: str) -> bool:
-        """
-        Verify a password against its stored salt and hash.
-        
-        :param plain_password: Plain text password to verify
-        :param stored_salt: Salt used during original hashing
-        :param stored_hash: Original hashed password
-        :return: True if password is correct, False otherwise
-        """
-        _, new_hash = SecurityUtils.hash_password(plain_password, stored_salt)
-        return secrets.compare_digest(new_hash, stored_hash)
+settings = get_settings()
 
-    @staticmethod
-    def generate_token(length: int = 32) -> str:
-        """
-        Generate a cryptographically secure random token.
-        
-        :param length: Length of the token in bytes
-        :return: Hex-encoded token
-        """
-        return secrets.token_hex(length)
+# Password hashing
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-    @staticmethod
-    def generate_jwt_secret(length: int = 32) -> str:
-        """
-        Generate a secure secret key for JWT signing.
-        
-        :param length: Length of the secret key in bytes
-        :return: Base64 encoded secret key
-        """
-        secret = secrets.token_bytes(length)
-        return base64.b64encode(secret).decode('utf-8')
+class Token(BaseModel):
+    """Token model."""
+    access_token: str
+    token_type: str
+    expires_at: datetime
 
-    @staticmethod
-    def mask_sensitive_data(data: str, show_chars: int = 4) -> str:
-        """
-        Mask sensitive data like emails or phone numbers.
+class TokenData(BaseModel):
+    """Token data model."""
+    sub: str
+    exp: datetime
+    scopes: list[str] = []
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verify password."""
+    try:
+        return pwd_context.verify(plain_password, hashed_password)
+    except Exception as e:
+        logger.error("Failed to verify password", error=e)
+        return False
+
+def get_password_hash(password: str) -> str:
+    """Get password hash."""
+    try:
+        return pwd_context.hash(password)
+    except Exception as e:
+        logger.error("Failed to hash password", error=e)
+        raise
+
+def create_access_token(
+    data: Dict[str, Any],
+    expires_delta: Optional[timedelta] = None
+) -> Token:
+    """Create access token."""
+    try:
+        to_encode = data.copy()
         
-        :param data: Data to mask
-        :param show_chars: Number of characters to show at the end
-        :return: Masked data
-        """
-        if len(data) <= show_chars:
-            return data
+        if expires_delta:
+            expire = datetime.utcnow() + expires_delta
+        else:
+            expire = datetime.utcnow() + timedelta(
+                minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+            )
         
-        return '*' * (len(data) - show_chars) + data[-show_chars:]
+        to_encode.update({
+            "exp": expire,
+            "iat": datetime.utcnow()
+        })
+        
+        encoded_jwt = jwt.encode(
+            to_encode,
+            settings.SECRET_KEY,
+            algorithm=settings.ALGORITHM
+        )
+        
+        return Token(
+            access_token=encoded_jwt,
+            token_type="bearer",
+            expires_at=expire
+        )
+    except Exception as e:
+        logger.error("Failed to create access token", error=e)
+        raise
+
+def decode_token(token: str) -> TokenData:
+    """Decode token."""
+    try:
+        payload = jwt.decode(
+            token,
+            settings.SECRET_KEY,
+            algorithms=[settings.ALGORITHM]
+        )
+        
+        return TokenData(
+            sub=payload["sub"],
+            exp=datetime.fromtimestamp(payload["exp"]),
+            scopes=payload.get("scopes", [])
+        )
+    except jwt.JWTError as e:
+        logger.error("Failed to decode token", error=e)
+        raise
+    except Exception as e:
+        logger.error("Unexpected error decoding token", error=e)
+        raise
+
+def generate_api_key() -> str:
+    """Generate API key."""
+    try:
+        return secrets.token_hex(32)
+    except Exception as e:
+        logger.error("Failed to generate API key", error=e)
+        raise
+
+def verify_api_key(api_key: str, stored_key: str) -> bool:
+    """Verify API key."""
+    try:
+        return secrets.compare_digest(api_key, stored_key)
+    except Exception as e:
+        logger.error("Failed to verify API key", error=e)
+        return False
+
+def generate_mfa_secret() -> str:
+    """Generate MFA secret."""
+    try:
+        return pyotp.random_base32()
+    except Exception as e:
+        logger.error("Failed to generate MFA secret", error=e)
+        raise
+
+def verify_mfa_token(secret: str, token: str) -> bool:
+    """Verify MFA token."""
+    try:
+        totp = pyotp.TOTP(secret)
+        return totp.verify(token)
+    except Exception as e:
+        logger.error("Failed to verify MFA token", error=e)
+        return False
+
+def get_mfa_uri(secret: str, username: str) -> str:
+    """Get MFA URI for QR code."""
+    try:
+        totp = pyotp.TOTP(secret)
+        return totp.provisioning_uri(
+            username,
+            issuer_name=settings.PROJECT_NAME
+        )
+    except Exception as e:
+        logger.error("Failed to get MFA URI", error=e)
+        raise 
